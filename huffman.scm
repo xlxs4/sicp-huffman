@@ -46,3 +46,42 @@
         ((= bit 1) (right-branch branch))
         (else (error "bad bit:
                CHOOSE-BRANCH" bit))))
+(define (encode message tree)
+  (if (null? message)
+      '()
+      (append
+       (encode-symbol (car message) tree)
+       (encode (cdr message) tree))))
+
+(define (encode-symbol sym tree)
+  (cond ((leaf? tree) '())
+        ((memq sym (symbols (left-branch tree)))
+         (cons 0 (encode-symbol sym (left-branch tree))))
+        ((memq sym (symbols (right-branch tree)))
+         (cons 1 (encode-symbol sym (right-branch tree))))
+        (else (error "symbol not in tree:
+               ENCODE-SYMBOL" sym))))
+
+(define (adjoin-set x set)
+  (cond ((null? set) (list x))
+        ((< (weight x) (weight (car set)))
+         (cons x set))
+        (else
+         (cons (car set)
+               (adjoin-set x (cdr set))))))
+
+(define sample-tree
+  (make-code-tree
+   (make-leaf 'a 5)
+   (make-code-tree
+    (make-leaf 'b 2)
+    (make-code-tree
+     (make-leaf 'r 2)
+     (make-code-tree
+      (make-leaf 'c 1)
+      (make-leaf 'd 1))))))
+
+(define sample-message
+  '(a b r a c a d a b r a))
+
+(decode (encode sample-message sample-tree) sample-tree)
