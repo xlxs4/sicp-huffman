@@ -62,6 +62,31 @@
         (else (error "symbol not in tree:
                ENCODE-SYMBOL" sym))))
 
+(define (make-pair sym freq)
+  (list sym freq))
+(define (symbol-pair p) (car p))
+(define (freq-pair p) (cadr p))
+
+(define (generate-huffman-tree pairs)
+  (successive-merge
+   (make-leaf-set pairs)))
+
+(define (successive-merge leaves)
+  (if (null? (cdr leaves))
+      (car leaves)
+      (successive-merge
+       (adjoin-set (make-code-tree (car leaves) (cadr leaves))
+                   (cddr leaves)))))
+
+(define (make-leaf-set pairs)
+  (if (null? pairs)
+      '()
+      (let ((pair (car pairs)))
+        (adjoin-set
+         (make-leaf (symbol-pair pair)
+                    (freq-pair pair))
+         (make-leaf-set (cdr pairs))))))
+
 (define (adjoin-set x set)
   (cond ((null? set) (list x))
         ((< (weight x) (weight (car set)))
@@ -71,15 +96,8 @@
                (adjoin-set x (cdr set))))))
 
 (define sample-tree
-  (make-code-tree
-   (make-leaf 'a 5)
-   (make-code-tree
-    (make-leaf 'b 2)
-    (make-code-tree
-     (make-leaf 'r 2)
-     (make-code-tree
-      (make-leaf 'c 1)
-      (make-leaf 'd 1))))))
+  (generate-huffman-tree
+   '((a 5) (b 2) (r 2) (c 1) (d 1))))
 
 (define sample-message
   '(a b r a c a d a b r a))
